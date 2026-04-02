@@ -1,9 +1,9 @@
 name: strata-dl
 description: Datalake by Strata
 runtime:
-  name: nodejs
+  name: bun
   options:
-    packagemanager: npm
+    packagemanager: bun
 config:
   pulumi:tags:
     value:

@@ -1,5 +1,6 @@
 {
   "name": "strata-dl",
+  "type": "module",
   "devDependencies": {
     "@types/node": "^18",
     "tsdown": "^0.21.7",
