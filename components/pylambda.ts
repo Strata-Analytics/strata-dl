@@ -3,6 +3,10 @@ import * as aws from "@pulumi/aws";
 
 type PYLambdaArgs = {
   path: string
+  description: string
+  layers?: (pulumi.Output<string> | string)[]
+  timeout?: number
+  memory?: number
 }
 
 export class PYLambda extends pulumi.ComponentResource {
@@ -33,7 +37,11 @@ export class PYLambda extends pulumi.ComponentResource {
       role: role.arn,
       runtime: aws.lambda.Runtime.Python3d14,
       code: new pulumi.asset.FileArchive(args.path),
-      handler: 'main.handler'
+      handler: 'main.handler',
+      layers: args.layers,
+      timeout: args.timeout,
+      memorySize: args.memory,
+      description: args.description,
     },
       {
         parent: this

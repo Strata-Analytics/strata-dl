@@ -3,6 +3,10 @@ import * as aws from "@pulumi/aws";
 
 type TSLambdaArgs = {
   path: string
+  description: string
+  layers?: string[]
+  timeout?: number
+  memory?: number
 }
 
 export class TSLambda extends pulumi.ComponentResource {
@@ -33,7 +37,11 @@ export class TSLambda extends pulumi.ComponentResource {
       role: role.arn,
       runtime: aws.lambda.Runtime.NodeJS24dX,
       code: new pulumi.asset.FileArchive(args.path + '/dist'),
-      handler: 'index.handler'
+      handler: 'index.handler',
+      description: args.description,
+      layers: args.layers,
+      memorySize: args.memory,
+      timeout: args.timeout
     },
       {
         parent: this
