@@ -1,0 +1,7 @@
+{
+  "main": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.1022.0"
+  }
+}
