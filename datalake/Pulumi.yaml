@@ -3,7 +3,7 @@ description: Datalake by Strata
 runtime:
   name: bun
   options:
-    packagemanager: bun
+    packagemanager: npm
 config:
   pulumi:tags:
     value:

@@ -1,0 +1,5 @@
+encryptionsalt: v1:Oi8i1bsKvt4=:v1:MUe7b4j9nXRTLkLG:vwYdJCzhk4a4OFb4AAWN9gQvHbl85w==
+config:
+  aws:region: us-east-1
+  strata-dl-requirements:devopsProfile: dl-devops
+  strata-dl-requirements:transformProfile: dl-dev
