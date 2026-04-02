@@ -1,0 +1,13 @@
+{
+  "name": "strata-dl",
+  "devDependencies": {
+    "@types/node": "^18",
+    "tsdown": "^0.21.7",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@pulumi/aws": "^7.0.0",
+    "@pulumi/awsx": "^3.0.0",
+    "@pulumi/pulumi": "^3.113.0"
+  }
+}
