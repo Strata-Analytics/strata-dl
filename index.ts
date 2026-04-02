@@ -1,25 +1,45 @@
 import * as aws from "@pulumi/aws";
-import { TSLambda } from "./components/tslambda";
-import path from "node:path";
-import { PYLambda } from "./components/pylambda";
+import { getName } from "./utils";
+import { env } from "./commons";
 
-new aws.s3.Bucket("raw", {
-  forceDestroy: true
+const rawBucket = new aws.s3.Bucket(getName('raw'), {
+  forceDestroy: env === 'dev',
 });
-
-new aws.s3.Bucket("stage", {
-  forceDestroy: true
-});
-
-new aws.s3.Bucket("analytics", {
-  forceDestroy: true
-});
-
-new TSLambda('component-lambda', {
-  path: path.join(__dirname, 'lambdas/test')
+new aws.s3.BucketNotification(getName('raw-notifications'), {
+  bucket: rawBucket.bucket,
+  eventbridge: true
+})
+new aws.s3.BucketVersioning(getName('raw-versioning'), {
+  bucket: rawBucket.bucket,
+  versioningConfiguration: {
+    status: 'Enabled'
+  }
 })
 
+const stageBucket = new aws.s3.Bucket(getName('stage'), {
+  forceDestroy: env === 'dev'
+});
+new aws.s3.BucketNotification(getName('stage-notifications'), {
+  bucket: stageBucket.bucket,
+  eventbridge: true
+})
+new aws.s3.BucketVersioning(getName('stage-versioning'), {
+  bucket: stageBucket.bucket,
+  versioningConfiguration: {
+    status: 'Enabled'
+  }
+})
 
-new PYLambda('pylambda', {
-  path: path.join(__dirname, 'lambdas/pytest')
+const analyticsBucket = new aws.s3.Bucket(getName('analytics'), {
+  forceDestroy: env === 'dev'
+});
+new aws.s3.BucketNotification(getName('analytics-notifications'), {
+  bucket: analyticsBucket.bucket,
+  eventbridge: true
+})
+new aws.s3.BucketVersioning(getName('analytics-versioning'), {
+  bucket: analyticsBucket.bucket,
+  versioningConfiguration: {
+    status: 'Enabled'
+  }
 })
