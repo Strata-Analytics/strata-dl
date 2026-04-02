@@ -1,6 +1,6 @@
 import * as aws from "@pulumi/aws"
 
-export const exchangeProvider = new aws.Provider("landing-provider", {
+export const devopsProvider = new aws.Provider("devops-provider", {
   assumeRoles: [
     {
       roleArn: ''

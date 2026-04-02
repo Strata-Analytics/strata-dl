@@ -6,7 +6,7 @@ const config = new pulumi.Config();
 const devopsProfile = config.require('devopsProfile')
 const transformProfile = config.require('transformProfile')
 
-const devops = new aws.Provider("exchange", {
+const devops = new aws.Provider("devops", {
   profile: devopsProfile
 })
 const transform = new aws.Provider("transformDev", {
@@ -14,7 +14,7 @@ const transform = new aws.Provider("transformDev", {
 })
 const devopsAccountId = await getAccountId(devops)
 
-new aws.iam.Role(getName('exchange-deploy'), {
+new aws.iam.Role(getName('devops-deploy'), {
   assumeRolePolicy: {
     Version: aws.iam.PolicyDocumentVersion.PolicyDocumentVersion_2012_10_17,
     Statement: [
