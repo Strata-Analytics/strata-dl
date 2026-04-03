@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**strata-dl** is a Pulumi/TypeScript project that provisions a serverless data lake on AWS. It uses **Bun** as the runtime and is organized into two independent Pulumi stacks.
+**strata-dl** is a Pulumi/TypeScript project that provisions a serverless data lake on AWS. It is organized into two independent Pulumi stacks.
 
 ## Commands
 
@@ -33,7 +33,7 @@ Lambda bundles are output to `dist/` inside each lambda directory (e.g., `datala
 ### Install dependencies
 
 ```bash
-bun install
+npm install
 ```
 
 ## Architecture
@@ -71,15 +71,3 @@ Provisions the actual data lake resources using cross-account providers defined 
 1. Create a directory under `datalake/src/lambdas/<name>/` with an `index.ts` (TypeScript) or `main.py` (Python)
 2. `tsdown.config.ts` auto-discovers TypeScript lambdas — no config change needed for TS
 3. Instantiate `TsLambda` or `PyLambda` in `datalake/src/` and import it from `datalake/index.ts`
-
-## Stack Configuration
-
-Config values are set per stack (e.g., `datalake/Pulumi.dev.yaml`):
-
-| Key | Description |
-|-----|-------------|
-| `aws:region` | AWS region (default: `us-east-1`) |
-| `devopsProfile` | AWS CLI profile for DevOps account |
-| `transformProfile` | AWS CLI profile for transform account |
-
-Role ARNs in `datalake/providers.ts` need to be populated after deploying the `requirements` stack.
