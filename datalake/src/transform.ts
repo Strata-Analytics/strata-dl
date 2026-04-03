@@ -1,6 +1,6 @@
 import * as aws from "@pulumi/aws";
 import { env, getName } from "../../commons";
-import { transformProvider } from "../providers";
+import { transformProvider } from "../../providers";
 
 // RAW BUCKET
 const rawBucket = new aws.s3.Bucket(getName('raw'), {

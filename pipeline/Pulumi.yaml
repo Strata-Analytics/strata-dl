@@ -1,0 +1,10 @@
+name: strata-dl-pipeline
+description: Pipeline for datalake project
+runtime:
+  name: bun
+  options:
+    packagemanager: npm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript
