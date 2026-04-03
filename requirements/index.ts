@@ -14,7 +14,7 @@ const transform = new aws.Provider("transformDev", {
 })
 const devopsAccountId = await getAccountId(devops)
 
-new aws.iam.Role(getName('devops-deploy'), {
+const devopsRole = new aws.iam.Role(getName('devops-deploy'), {
   assumeRolePolicy: {
     Version: aws.iam.PolicyDocumentVersion.PolicyDocumentVersion_2012_10_17,
     Statement: [
@@ -25,7 +25,7 @@ new aws.iam.Role(getName('devops-deploy'), {
         Condition: {
           "StringLike": {
             "aws:PrincipalArn": [
-              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AdministratorAccess*`
+              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`
             ]
           }
         },
@@ -39,7 +39,7 @@ new aws.iam.Role(getName('devops-deploy'), {
   }
 )
 
-new aws.iam.Role(getName('transform-deploy'), {
+const transformRole = new aws.iam.Role(getName('transform-deploy'), {
   assumeRolePolicy: {
     Version: aws.iam.PolicyDocumentVersion.PolicyDocumentVersion_2012_10_17,
     Statement: [
@@ -50,7 +50,7 @@ new aws.iam.Role(getName('transform-deploy'), {
         Condition: {
           "StringLike": {
             "aws:PrincipalArn": [
-              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AdministratorAccess*`
+              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`
             ]
           }
         },
@@ -63,3 +63,6 @@ new aws.iam.Role(getName('transform-deploy'), {
     provider: transform
   }
 )
+
+export const devopsRoleArn = devopsRole.arn
+export const transformRoleArn = transformRole.arn

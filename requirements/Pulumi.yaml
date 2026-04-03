@@ -1,5 +1,5 @@
 name: strata-dl-requirements
-description: Datalake by Strata
+description: Requirements to deploy Datalake by Strata
 runtime:
   name: bun
   options:
