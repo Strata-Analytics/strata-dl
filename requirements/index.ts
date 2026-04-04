@@ -1,6 +1,6 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi"
-import { getAccountId, getName } from "../commons";
+import { env, getAccountId, getName, projectName } from "../commons";
 
 const config = new pulumi.Config();
 const devopsProfile = config.require('devopsProfile')
@@ -25,7 +25,8 @@ const devopsRole = new aws.iam.Role(getName('devops-deploy'), {
         Condition: {
           "StringLike": {
             "aws:PrincipalArn": [
-              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`
+              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`,
+              `arn:aws:iam::${devopsAccountId}:role/${projectName}-${env}-codebuild-*`
             ]
           }
         },
@@ -50,7 +51,8 @@ const transformRole = new aws.iam.Role(getName('transform-deploy'), {
         Condition: {
           "StringLike": {
             "aws:PrincipalArn": [
-              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`
+              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`,
+              `arn:aws:iam::${devopsAccountId}:role/${projectName}-${env}-codebuild-*`
             ]
           }
         },
