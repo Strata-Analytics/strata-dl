@@ -30,11 +30,6 @@ export PULUMI_CONFIG_PASSPHRASE=''
 BUCKET_NAME=$(bun -e "import params from './params.json'; console.log(params.pulumiBackendBucketName);")
 GITHUB_REPO_ID=$(bun -e "import params from './params.json'; console.log(params.githubRepoId);")
 PROJECT_NAME=$(bun -e "import params from './params.json'; console.log(params.projectName);")
-PROJECT_NAME=$(bun -e "import params from './params.json'; console.log(params.projectName);")
-DEVOPS_DEV_PROFILE=$(bun -e "import params from './params.json'; console.log(params.profiles.dev.devops);")
-TRANSFORM_DEV_PROFILE=$(bun -e "import params from './params.json'; console.log(params.profiles.dev.transform);")
-DEVOPS_PROD_PROFILE=$(bun -e "import params from './params.json'; console.log(params.profiles.prod.devops);")
-TRANSFORM_PROD_PROFILE=$(bun -e "import params from './params.json'; console.log(params.profiles.prod.transform);")
 
 for var in BUCKET_NAME GITHUB_REPO_ID PROJECT_NAME; do
   if [[ -z "${!var}" ]]; then
@@ -44,25 +39,31 @@ for var in BUCKET_NAME GITHUB_REPO_ID PROJECT_NAME; do
 done
 
 # DEPLOYING
+
+echo "==> 3/6 Deploying..."
 pulumi login s3://${BUCKET_NAME} || {
   echo "Failed to login to S3 backend"
   exit 1
 }
 
-echo "==> 3/6 Deploying requirements for dev environment..."
-pulumi --cwd requirements stack select dev --create
-pulumi --cwd requirements up --yes --non-interactive
+ENVS=$(bun -e "import params from './params.json'; console.log(Object.keys(params.profiles).join(' '));")
 
-echo "==> 4/6 Deploying datalake pipeline for dev environment..."
-pulumi --cwd pipeline stack select dev --create
-pulumi --cwd pipeline up --yes --non-interactive
+for ENV in $ENVS; do
+  DEVOPS_PROF=$(bun -e "import params from './params.json'; console.log(params.profiles['$ENV']?.devops || '');")
+  TRANSFORM_PROF=$(bun -e "import params from './params.json'; console.log(params.profiles['$ENV']?.transform || '');")
 
-echo "==> 5/6 Deploying requirements for prod environment..."
-pulumi --cwd requirements stack select prod --create
-pulumi --cwd requirements up --yes --non-interactive
+  if [[ -n "$DEVOPS_PROF" && -n "$TRANSFORM_PROF" ]]; then
+    echo "----Deploying requirements for $ENV---"
+    pulumi --cwd requirements stack select "$ENV" --create
+    pulumi --cwd requirements up --yes --non-interactive
 
-echo "==> 6/6 Deploying datalake pipeline for prod environment..."
-pulumi --cwd pipeline stack select prod --create
-pulumi --cwd pipeline up --yes --non-interactive
+    echo "----Deploying pipeline for $ENV..."
+    pulumi --cwd pipeline stack select "$ENV" --create
+    pulumi --cwd pipeline up --yes --non-interactive
+  else
+    echo "----Skipping Environment: $ENV (Missing devops or transform profiles)"
+  fi
+done
 
 echo "==> Done."
+echo "=== Finish setup of Code Connection in AWS dashboard ==="
