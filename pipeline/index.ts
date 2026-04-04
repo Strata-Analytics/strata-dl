@@ -180,7 +180,8 @@ const pipelineRole = new aws.iam.Role(getName("pipeline"), {
         await aws.iam.getPolicyDocument({
           statements: [{
             actions: [
-              "codeconnections:UseConnection"
+              "codeconnections:UseConnection",
+              "codestar-connections:UseConnection"
             ],
             resources: [
               arn
