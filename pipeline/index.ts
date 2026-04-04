@@ -13,7 +13,7 @@ const gitConnection = new aws.codeconnections.Connection(getName(gitProvider), {
 
 const codebuildRole = new aws.iam.Role(getName("codebuild"), {
   assumeRolePolicy: {
-    Version: "2012-10-17",
+    Version: aws.iam.PolicyDocumentVersion.PolicyDocumentVersion_2012_10_17,
     Statement: [
       {
         Effect: aws.iam.PolicyStatementEffect.ALLOW,
