@@ -1,6 +1,7 @@
 import * as aws from "@pulumi/aws";
+import * as pulumi from "@pulumi/pulumi";
 import { env, getName, githubRepoId, pulumiBackendBucketName } from "../commons";
-import { devopsProvider, transformRoleArn } from "../providers";
+import { devopsProvider, devopsRoleArn, transformRoleArn } from "../providers";
 
 const githubBranch = env === 'prod' ? "main" : 'dev';
 
@@ -25,15 +26,52 @@ const codebuildRole = new aws.iam.Role(getName("codebuild"), {
   },
   inlinePolicies: [
     {
-      name: 'assume-deploy-role',
-      policy: transformRoleArn.apply(async arn => (
-        await aws.iam.getPolicyDocument({
-          statements: [{
-            actions: ["sts:AssumeRole"],
-            resources: [arn]
-          }]
-        })).json)
+      name: 'logs',
+      policy: (await aws.iam.getPolicyDocument({
+        statements: [{
+          actions: [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          resources: ["*"]
+        }]
+      })).json
+    },
+    {
+      name: 's3',
+      policy: artifactBucket.arn.apply(async arn => (await aws.iam.getPolicyDocument({
+        statements: [
+          {
+            actions: [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject",
+              "s3:ListBucket"
+            ],
+            resources: [
+              arn + '/*',
+              `arn:aws:s3:::${pulumiBackendBucketName}/*`,
+              `arn:aws:s3:::${pulumiBackendBucketName}`
+            ]
+          }
+        ]
+      }))).json
+    },
+    {
+      name: 'sts',
+      policy: pulumi.all([devopsRoleArn, transformRoleArn]).apply(async ([arn1, arn2]) => (await aws.iam.getPolicyDocument({
+        statements: [
+          {
+            actions: [
+              "sts:AssumeRole"
+            ],
+            resources: [arn1, arn2]
+          }
+        ]
+      }))).json
     }
+
   ],
 }, { provider: devopsProvider });
 
@@ -57,6 +95,9 @@ const deployProject = new aws.codebuild.Project(getName("deploy-project"), {
       version: "0.2",
       phases: {
         install: {
+          'runtime-versions': {
+            nodejs: 24,
+          },
           commands: [
             'curl -fsSL https://bun.sh/install | bash',
             'export PATH=$HOME/.bun/bin:$PATH',
@@ -65,7 +106,7 @@ const deployProject = new aws.codebuild.Project(getName("deploy-project"), {
             'npm ci'
           ],
         },
-        prebuild: {
+        pre_build: {
           commands: [
             'export PULUMI_CONFIG_PASSPHRASE=""',
             'echo "Pulumi backend URL:" $PULUMI_BACKEND_URL',
@@ -75,7 +116,9 @@ const deployProject = new aws.codebuild.Project(getName("deploy-project"), {
         build: {
           commands: [
             "npx tsdown",
-            `cd datalake && pulumi up --stack ${env} --yes --non-interactive`,
+            "cd datalake",
+            `pulumi stack select ${env} --create`,
+            'pulumi up --yes --non-interactive',
           ],
         },
       },
