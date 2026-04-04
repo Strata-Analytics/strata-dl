@@ -1,12 +1,17 @@
 import * as aws from "@pulumi/aws"
-import { env, getAccountId, getName, projectName } from "../commons";
+import { env, getAccountId, getName, projectName, tags } from "../commons";
 import params from '../params.json'
 
-
 const devops = new aws.Provider("devops", {
+  defaultTags: {
+    tags
+  },
   profile: params.profiles[env].devops
 })
 const transform = new aws.Provider("transformDev", {
+  defaultTags: {
+    tags
+  },
   profile: params.profiles[env].transform
 })
 const devopsAccountId = await getAccountId(devops)

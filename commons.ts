@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi"
 import * as aws from "@pulumi/aws"
 import params from './params.json'
+import tagsFile from './tags.json'
 
 const isCodeBuild = !!process.env.CODEBUILD_BUILD_ID;
 if (!isCodeBuild && !process.env.AWS_PROFILE) {
@@ -23,4 +24,10 @@ export function getName(name: string) {
 
 export async function getAccountId(provider: aws.Provider) {
   return (await aws.getCallerIdentity({}, { provider })).accountId
+}
+
+export const tags = {
+  ...tagsFile,
+  projectName,
+  env
 }
