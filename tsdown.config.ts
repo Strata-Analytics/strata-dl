@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const lambdaDir = './lambdas'
+const lambdaDir = './datalake/src/lambdas'
 const entries = fs.readdirSync(lambdaDir)
   .filter(f => {
     const fullPath = path.join(lambdaDir, f);
@@ -10,10 +10,10 @@ const entries = fs.readdirSync(lambdaDir)
     const hasEntryFile = fs.existsSync(path.join(fullPath, 'index.ts'));
     return isDirectory && hasEntryFile;
   }).map(dir => ({
-    entry: `lambdas/${dir}/index.ts`,
+    entry: `${lambdaDir}/${dir}/index.ts`,
     minify: true,
     sourcemap: true,
-    outDir: `lambdas/${dir}/dist`,
+    outDir: `${lambdaDir}/${dir}/dist`,
     deps: {
       neverBundle: [/^@aws-sdk\/.*/],
     }
