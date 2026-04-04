@@ -2,7 +2,8 @@ import * as pulumi from "@pulumi/pulumi"
 import * as aws from "@pulumi/aws"
 import params from './params.json'
 
-if (!process.env.AWS_PROFILE) {
+const isCodeBuild = !!process.env.CODEBUILD_BUILD_ID;
+if (!isCodeBuild && !process.env.AWS_PROFILE) {
   throw new Error('ERROR :::::: AWS_PROFILE env variable must be set to your profile for devops account ::::::')
 }
 
@@ -16,7 +17,12 @@ if (!pulumiBackendBucketName) {
   throw new Error('ERROR :::::: Add "pulumiBackendBucketName" in params.json ::::::')
 }
 
-export const projectName = 'strata-dl'
+export const projectName = params.projectName
+
+if (!projectName) {
+  throw new Error('ERROR :::::: Add "projectName" in params.json ::::::')
+}
+
 export const env = pulumi.getStack() as "dev" | "prod";
 
 export function getName(name: string) {
