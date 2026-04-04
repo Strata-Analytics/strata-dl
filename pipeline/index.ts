@@ -9,7 +9,7 @@ const artifactBucket = new aws.s3.Bucket(getName("pipeline-artifacts"), {
   forceDestroy: env === "dev",
 }, { provider: devopsProvider });
 
-const githubConnection = new aws.codestarconnections.Connection(getName("github"), {
+const githubConnection = new aws.codeconnections.Connection(getName("github"), {
   providerType: "GitHub",
 }, { provider: devopsProvider });
 
@@ -128,11 +128,11 @@ const deployProject = new aws.codebuild.Project(getName("deploy-project"), {
 
 const pipelineRole = new aws.iam.Role(getName("pipeline"), {
   assumeRolePolicy: {
-    Version: "2012-10-17",
+    Version: aws.iam.PolicyDocumentVersion.PolicyDocumentVersion_2012_10_17,
     Statement: [
       {
-        Effect: "Allow",
-        Principal: { Service: "codepipeline.amazonaws.com" },
+        Effect: aws.iam.PolicyStatementEffect.ALLOW,
+        Principal: aws.iam.Principals.CodePipelinePrincipal,
         Action: "sts:AssumeRole",
       },
     ],
@@ -143,8 +143,19 @@ const pipelineRole = new aws.iam.Role(getName("pipeline"), {
       policy: artifactBucket.arn.apply(async arn => (
         await aws.iam.getPolicyDocument({
           statements: [{
-            actions: ["s3:GetObject", "s3:PutObject", "s3:GetBucketVersioning", "s3:GetObjectVersion"],
-            resources: [arn, arn + '/*']
+            actions: [
+              "s3:GetBucketVersioning",
+              "s3:GetBucketAcl",
+              "s3:GetBucketLocation",
+              "s3:PutObject",
+              "s3:PutObjectAcl",
+              "s3:GetObject",
+              "s3:GetObjectVersion"
+            ],
+            resources: [
+              arn,
+              arn + '/*'
+            ]
           }]
         })).json)
     },
@@ -153,18 +164,27 @@ const pipelineRole = new aws.iam.Role(getName("pipeline"), {
       policy: deployProject.arn.apply(async arn => (
         await aws.iam.getPolicyDocument({
           statements: [{
-            actions: ["codebuild:BatchGetBuilds", "codebuild:StartBuild"],
+            actions: [
+              "codebuild:BatchGetBuilds",
+              "codebuild:StartBuild",
+              "codebuild:BatchGetBuildBatches",
+              "codebuild:StartBuildBatch"
+            ],
             resources: [arn]
           }]
         })).json)
     },
     {
-      name: 'codestar',
+      name: 'codeconnections',
       policy: githubConnection.arn.apply(async arn => (
         await aws.iam.getPolicyDocument({
           statements: [{
-            actions: ["codestar-connections:UseConnection"],
-            resources: [arn]
+            actions: [
+              "codeconnections:UseConnection"
+            ],
+            resources: [
+              arn
+            ]
           }]
         })).json)
     }
