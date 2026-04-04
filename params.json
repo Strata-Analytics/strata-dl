@@ -1,12 +1,13 @@
 {
   "pulumiBackendBucketName": "",
-  "gitRepoId": "",
   "gitProvider": "",
+  "gitRepoId": "",
   "projectName": "",
   "profiles": {
     "dev": {
       "devops": "",
       "transform": ""
     }
-  }
+  },
+  "devopsSSORoleName": ""
 }

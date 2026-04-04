@@ -27,12 +27,13 @@ else
 fi
 
 export PULUMI_CONFIG_PASSPHRASE=''
-BUCKET_NAME=$(bun -e "import params from './params.json'; console.log(params.pulumiBackendBucketName);")
-GIT_PROVIDER=$(bun -e "import params from './params.json'; console.log(params.gitProvider);")
-GIT_REPO_ID=$(bun -e "import params from './params.json'; console.log(params.gitRepoId);")
-PROJECT_NAME=$(bun -e "import params from './params.json'; console.log(params.projectName);")
+pulumiBackendBucketName=$(bun -e "import params from './params.json'; console.log(params.pulumiBackendBucketName);")
+gitProvider=$(bun -e "import params from './params.json'; console.log(params.gitProvider);")
+gitRepoId=$(bun -e "import params from './params.json'; console.log(params.gitRepoId);")
+projectName=$(bun -e "import params from './params.json'; console.log(params.projectName);")
+devopsSSORoleName=$(bun -e "import params from './params.json'; console.log(params.devopsSSORoleName);")
 
-for var in BUCKET_NAME GIT_PROVIDER GIT_REPO_ID PROJECT_NAME; do
+for var in pulumiBackendBucketName gitProvider gitRepoId projectName devopsSSORoleName; do
   if [[ -z "${!var}" ]]; then
     echo "Error: Variable '$var' is empty in params.json."
     exit 1
@@ -42,7 +43,7 @@ done
 # DEPLOYING
 
 echo "==> 3/6 Deploying..."
-pulumi login s3://${BUCKET_NAME} || {
+pulumi login s3://${pulumiBackendBucketName} || {
   echo "Failed to login to S3 backend"
   exit 1
 }
@@ -58,7 +59,7 @@ for ENV in $ENVS; do
     pulumi --cwd requirements stack select "$ENV" --create
     pulumi --cwd requirements up --yes --non-interactive
 
-    echo "----Deploying pipeline for $ENV---"
+    echo "----Deploying pipeline for $ENV----"
     pulumi --cwd pipeline stack select "$ENV" --create
     pulumi --cwd pipeline up --yes --non-interactive
   else

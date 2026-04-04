@@ -25,9 +25,9 @@ const devopsRole = new aws.iam.Role(getName('devops-deploy'), {
         Action: 'sts:AssumeRole',
         Principal: { AWS: `arn:aws:iam::${devopsAccountId}:root` },
         Condition: {
-          "StringLike": {
+          "ArnLike": {
             "aws:PrincipalArn": [
-              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`,
+              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/${params.devopsSSORoleName}`,
               `arn:aws:iam::${devopsAccountId}:role/${projectName}-${env}-codebuild-*`
             ]
           }
@@ -51,9 +51,9 @@ const transformRole = new aws.iam.Role(getName('transform-deploy'), {
         Action: 'sts:AssumeRole',
         Principal: { AWS: `arn:aws:iam::${devopsAccountId}:root` },
         Condition: {
-          "StringLike": {
+          "ArnLike": {
             "aws:PrincipalArn": [
-              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess*`,
+              `arn:aws:iam::${devopsAccountId}:role/aws-reserved/sso.amazonaws.com/${params.devopsSSORoleName}`,
               `arn:aws:iam::${devopsAccountId}:role/${projectName}-${env}-codebuild-*`
             ]
           }
