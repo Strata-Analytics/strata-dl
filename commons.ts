@@ -8,20 +8,10 @@ if (!isCodeBuild && !process.env.AWS_PROFILE) {
 }
 
 export const githubRepoId = params.githubRepoId
-if (!githubRepoId) {
-  throw new Error('ERROR :::::: Add "githubRepoId" in params.json ::::::')
-}
 
 export const pulumiBackendBucketName = params.pulumiBackendBucketName
-if (!pulumiBackendBucketName) {
-  throw new Error('ERROR :::::: Add "pulumiBackendBucketName" in params.json ::::::')
-}
 
 export const projectName = params.projectName
-
-if (!projectName) {
-  throw new Error('ERROR :::::: Add "projectName" in params.json ::::::')
-}
 
 export const env = pulumi.getStack() as "dev" | "prod";
 
