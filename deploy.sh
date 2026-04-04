@@ -32,7 +32,7 @@ GIT_PROVIDER=$(bun -e "import params from './params.json'; console.log(params.gi
 GIT_REPO_ID=$(bun -e "import params from './params.json'; console.log(params.gitRepoId);")
 PROJECT_NAME=$(bun -e "import params from './params.json'; console.log(params.projectName);")
 
-for var in BUCKET_NAME GIT_PROVIDER GITHUB_REPO_ID PROJECT_NAME; do
+for var in BUCKET_NAME GIT_PROVIDER GIT_REPO_ID PROJECT_NAME; do
   if [[ -z "${!var}" ]]; then
     echo "Error: Variable '$var' is empty in params.json."
     exit 1
