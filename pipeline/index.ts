@@ -1,14 +1,14 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-import { env, getName, githubRepoId, pulumiBackendBucketName } from "../commons";
+import { env, getName, gitRepoId, pulumiBackendBucketName, gitProvider } from "../commons";
 import { devopsProvider, devopsRoleArn, transformRoleArn } from "../providers";
 
 const artifactBucket = new aws.s3.Bucket(getName("pipeline-artifacts"), {
   forceDestroy: env === "dev",
 }, { provider: devopsProvider });
 
-const githubConnection = new aws.codeconnections.Connection(getName("github"), {
-  providerType: "GitHub",
+const gitConnection = new aws.codeconnections.Connection(getName(gitProvider), {
+  providerType: gitProvider,
 }, { provider: devopsProvider });
 
 const codebuildRole = new aws.iam.Role(getName("codebuild"), {
@@ -174,7 +174,7 @@ const pipelineRole = new aws.iam.Role(getName("pipeline"), {
     },
     {
       name: 'codeconnections',
-      policy: githubConnection.arn.apply(async arn => (
+      policy: gitConnection.arn.apply(async arn => (
         await aws.iam.getPolicyDocument({
           statements: [{
             actions: [
@@ -198,21 +198,44 @@ new aws.codepipeline.Pipeline(getName("datalake"), {
       type: "S3",
     },
   ],
+  triggers: [
+    {
+      providerType: "CodeStarSourceConnection",
+      gitConfiguration: {
+        sourceActionName: gitProvider,
+        pushes: [
+          {
+            branches: {
+              includes: [
+                env
+              ]
+            },
+            filePaths: {
+              includes: [
+                'datalake/**'
+              ]
+            }
+          }
+        ],
+      }
+
+    }
+  ],
   pipelineType: 'V2',
   stages: [
     {
       name: "Source",
       actions: [
         {
-          name: "GitHub",
+          name: gitProvider,
           category: "Source",
           owner: "AWS",
           provider: "CodeStarSourceConnection",
           version: "1",
           outputArtifacts: ["source"],
           configuration: {
-            ConnectionArn: githubConnection.arn,
-            FullRepositoryId: githubRepoId,
+            ConnectionArn: gitConnection.arn,
+            FullRepositoryId: gitRepoId,
             BranchName: env,
             DetectChanges: "true",
           },

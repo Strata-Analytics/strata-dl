@@ -28,10 +28,11 @@ fi
 
 export PULUMI_CONFIG_PASSPHRASE=''
 BUCKET_NAME=$(bun -e "import params from './params.json'; console.log(params.pulumiBackendBucketName);")
-GITHUB_REPO_ID=$(bun -e "import params from './params.json'; console.log(params.githubRepoId);")
+GIT_PROVIDER=$(bun -e "import params from './params.json'; console.log(params.gitProvider);")
+GIT_REPO_ID=$(bun -e "import params from './params.json'; console.log(params.gitRepoId);")
 PROJECT_NAME=$(bun -e "import params from './params.json'; console.log(params.projectName);")
 
-for var in BUCKET_NAME GITHUB_REPO_ID PROJECT_NAME; do
+for var in BUCKET_NAME GIT_PROVIDER GITHUB_REPO_ID PROJECT_NAME; do
   if [[ -z "${!var}" ]]; then
     echo "Error: Variable '$var' is empty in params.json."
     exit 1
@@ -53,11 +54,11 @@ for ENV in $ENVS; do
   TRANSFORM_PROF=$(bun -e "import params from './params.json'; console.log(params.profiles['$ENV']?.transform || '');")
 
   if [[ -n "$DEVOPS_PROF" && -n "$TRANSFORM_PROF" ]]; then
-    echo "----Deploying requirements for $ENV---"
+    echo "----Deploying requirements for $ENV----"
     pulumi --cwd requirements stack select "$ENV" --create
     pulumi --cwd requirements up --yes --non-interactive
 
-    echo "----Deploying pipeline for $ENV..."
+    echo "----Deploying pipeline for $ENV---"
     pulumi --cwd pipeline stack select "$ENV" --create
     pulumi --cwd pipeline up --yes --non-interactive
   else

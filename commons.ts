@@ -7,7 +7,9 @@ if (!isCodeBuild && !process.env.AWS_PROFILE) {
   throw new Error('ERROR :::::: AWS_PROFILE env variable must be set to your profile for devops account ::::::')
 }
 
-export const githubRepoId = params.githubRepoId
+export const gitRepoId = params.gitRepoId
+
+export const gitProvider = params.gitProvider
 
 export const pulumiBackendBucketName = params.pulumiBackendBucketName
 
@@ -16,7 +18,7 @@ export const projectName = params.projectName
 export const env = pulumi.getStack() as keyof typeof params.profiles;
 
 export function getName(name: string) {
-  return `${projectName}-${env}-${name}`
+  return `${projectName}-${env}-${name}`.toLowerCase()
 }
 
 export async function getAccountId(provider: aws.Provider) {
