@@ -68,5 +68,5 @@ const transformRole = new aws.iam.Role(getName('transform-deploy'), {
   }
 )
 
-export const devopsRoleArn = devopsRole.arn
-export const transformRoleArn = transformRole.arn
+export const outputDevopsRoleArn = devopsRole.arn
+export const outputTransformRoleArn = transformRole.arn

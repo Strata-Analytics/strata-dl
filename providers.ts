@@ -3,8 +3,8 @@ import * as aws from "@pulumi/aws"
 import { tags } from "./commons"
 
 const requirementsStackRef = new pulumi.StackReference(`organization/strata-dl-requirements/dev`)
-export const devopsRoleArn = requirementsStackRef.getOutput('devopsRoleArn') as pulumi.Output<string>
-export const transformRoleArn = requirementsStackRef.getOutput('transformRoleArn') as pulumi.Output<string>
+export const devopsRoleArn = requirementsStackRef.getOutput('outputDevopsRoleArn') as pulumi.Output<string>
+export const transformRoleArn = requirementsStackRef.getOutput('outputTransformRoleArn') as pulumi.Output<string>
 
 export const devopsProvider = new aws.Provider("devops-provider", {
   defaultTags: {
