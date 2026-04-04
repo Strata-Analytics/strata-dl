@@ -3,8 +3,6 @@ import * as pulumi from "@pulumi/pulumi";
 import { env, getName, githubRepoId, pulumiBackendBucketName } from "../commons";
 import { devopsProvider, devopsRoleArn, transformRoleArn } from "../providers";
 
-const githubBranch = env === 'prod' ? "main" : 'dev';
-
 const artifactBucket = new aws.s3.Bucket(getName("pipeline-artifacts"), {
   forceDestroy: env === "dev",
 }, { provider: devopsProvider });
@@ -215,7 +213,7 @@ new aws.codepipeline.Pipeline(getName("datalake"), {
           configuration: {
             ConnectionArn: githubConnection.arn,
             FullRepositoryId: githubRepoId,
-            BranchName: githubBranch,
+            BranchName: env,
             DetectChanges: "true",
           },
         },

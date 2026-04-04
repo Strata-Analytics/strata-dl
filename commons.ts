@@ -13,7 +13,7 @@ export const pulumiBackendBucketName = params.pulumiBackendBucketName
 
 export const projectName = params.projectName
 
-export const env = pulumi.getStack() as "dev" | "prod";
+export const env = pulumi.getStack() as keyof typeof params.profiles;
 
 export function getName(name: string) {
   return `${projectName}-${env}-${name}`
