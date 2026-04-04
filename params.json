@@ -1,5 +1,15 @@
 {
   "pulumiBackendBucketName": "",
   "githubRepoId": "",
-  "projectName": ""
+  "projectName": "",
+  "profiles": {
+    "dev": {
+      "devops": "",
+      "transform": ""
+    },
+    "prod": {
+      "devops": "",
+      "transform": ""
+    }
+  }
 }
