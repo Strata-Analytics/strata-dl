@@ -4,70 +4,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**strata-dl** is a Pulumi/TypeScript project that provisions a serverless data lake on AWS. It is organized into two independent Pulumi stacks.
+**strata-dl** is a multi-account AWS data lake infrastructure project using Pulumi and TypeScript. It provisions three independent Pulumi stacks (requirements → pipeline → datalake) that deploy: CI/CD infrastructure (in a devops account) and data lake resources (per environment accounts).
 
 ## Commands
 
-### Pulumi (run from within each stack directory)
-
 ```bash
-# Preview changes
-pulumi preview
+# Install dependencies
+npm ci
 
-# Deploy infrastructure
-pulumi up
+# Bundle Lambda functions (TypeScript → JavaScript, outputs to datalake/src/lambdas/*/dist/)
+npx tsdown
 
-# Destroy infrastructure
-pulumi destroy
-```
+# Deploy all stacks via the orchestration script
+./deploy.sh
 
-### Build Lambda functions (run from repo root)
+# Manual per-stack deployment (requires AWS_PROFILE and pulumi login first)
 
-```bash
-# Bundle all TypeScript Lambda functions via tsdown
-bun run tsdown
-```
+Take in account when manually deploying for the first time, you must name the stacks the same as the environments in params.json profiles.transform.[env], it is recommended for the first deploy to be performed using the deploy.sh script.
 
-Lambda bundles are output to `dist/` inside each lambda directory (e.g., `datalake/src/lambdas/test/dist/`).
+export AWS_PROFILE=[devops-account-profile]
+pulumi login s3://pulumi-backend-[aws-account-id]
+pulumi --cwd requirements up
+pulumi --cwd pipeline up
 
-### Install dependencies
-
-```bash
-npm install
+The datalake resources can be deployed via the pipeline previously deployed or
+pulumi --cwd datalake up
 ```
 
 ## Architecture
 
-Two independent Pulumi stacks with a deployment dependency:
+### Multi-Account Model
 
-### `requirements/` — Deploy first
+- **Devops account**: hosts CodePipeline, CodeBuild
+- **Transform accounts**: host the actual data lake resources
+- Cross-account access is done via IAM role assumption (roles created by the `requirements` stack)
 
-Sets up cross-account IAM trust. Uses two AWS profiles configured via `pulumi config`:
-- `devopsProfile` (e.g., `dl-devops`) — DevOps/orchestration account
-- `transformProfile` (e.g., `dl-dev`) — Data lake/transform account
+### Stack Dependency Chain
 
-Creates IAM roles that allow the DevOps account to assume roles in the transform account for deployment.
+```
+requirements → pipeline
+                  ↓ (triggers via CodePipeline)
+              datalake
+```
 
-### `datalake/` — Deploy second
+1. **`requirements/`** — Creates IAM roles in both accounts (`devopsRole`, `transformRole`) and exports their ARNs. Must be deployed first.
+2. **`pipeline/`** — Creates AWS CodePipeline + CodeBuild in the devops account. Reads role ARNs from the requirements stack. Pipeline triggers on pushes to `{env}` branch that contains changes in `datalake/**`.
+3. **`datalake/`** — Creates the data lake resources in the transform account: three S3 buckets (raw → stage → analytics) and complementary resources. This stack is normally deployed by CodeBuild, not manually.
 
-Provisions the actual data lake resources using cross-account providers defined in `datalake/providers.ts`:
-- **Three S3 buckets**: `raw`, `stage`, `analytics` — all with versioning and EventBridge notifications
-- **Lambda functions** deployed via reusable components in `datalake/src/components/`
-- **Lambda layers**: Powertools (Python), AWS SDK Pandas, custom Paramiko layer
+### Shared Utilities
 
-### Shared utilities (`commons.ts`)
+- **`commons.ts`** — Shared across all stacks: `projectName`, `env` (current stack name), `getName(name)` for consistent resource naming (`{projectName}-{env}-{name}`), `getAccountId()`, and default `tags`.
+- **`providers.ts`** — Defines cross-account Pulumi AWS providers using role assumption. Both stacks import this to deploy into the correct account.
+- **`params.json`** — Project-wide config: AWS profile names, Git repo, Pulumi backend S3 bucket, project name. Used by both `commons.ts` and `deploy.sh`.
 
-- `projectName` — `"strata-dl"`
-- `env` — derived from the Pulumi stack name (e.g., `dev`, `prod`)
-- `getName(suffix)` — generates consistent resource names: `strata-dl-{env}-{suffix}`
-- `getAccountId(provider)` — retrieves AWS account ID for a given provider
+### Lambda Components
 
-### Lambda components
+Reusable Pulumi component classes in `datalake/src/components/`:
+- **`TSLambda`** — Node.js 24 Lambda
+- **`PYLambda`** — Python 3.14 Lambda
 
-`TsLambda` (`datalake/src/components/tslambda.ts`) and `PyLambda` (`datalake/src/components/pylambda.ts`) are Pulumi ComponentResources that each create an IAM role + Lambda function. Pass `layers`, `memorySize`, and `timeout` as options.
+Lambda source files live in `datalake/src/lambdas/`. Each subdirectory with an `index.ts` is auto-discovered by `tsdown.config.ts` and bundled into `dist/`.
 
-### Adding a new Lambda
+Lambda Layers are defined in `datalake/src/lambdas/layers.ts`. Lambda layers source files live in `datalake/src/lambdas/layers`
 
-1. Create a directory under `datalake/src/lambdas/<name>/` with an `index.ts` (TypeScript) or `main.py` (Python)
-2. `tsdown.config.ts` auto-discovers TypeScript lambdas — no config change needed for TS
-3. Instantiate `TsLambda` or `PyLambda` in `datalake/src/` and import it from `datalake/index.ts`
+
+### State Management
+
+Remote Pulumi state is stored in S3 (`s3://pulumi-backend-{account-id}`). No passphrase encryption (`PULUMI_CONFIG_PASSPHRASE=""`).
+
+### Resource Naming Convention
+
+All AWS resource names follow: `{projectName}-{env}-{name}` (lowercase), generated by `getName()` from `commons.ts`.
