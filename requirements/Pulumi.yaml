@@ -1,9 +1,10 @@
 name: strata-dl-requirements
 description: Requirements to deploy Datalake by Strata
 runtime:
-  name: bun
+  name: nodejs
   options:
     packagemanager: npm
+    nodeargs: "--import=tsx"
 config:
   pulumi:tags:
     value:

@@ -4,6 +4,7 @@
   "devDependencies": {
     "@types/node": "^18",
     "tsdown": "^0.21.7",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {

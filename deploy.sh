@@ -2,38 +2,26 @@
 set -euo pipefail
 
 # DEPENDENCIES
-echo "==> 1/6 Checking for dependencies..."
-if ! command -v pulumi &>/dev/null; then
-  echo "==> pulumi not found, installing..."
-  curl -fsSL https://get.pulumi.com | sh
-else
-  echo "pulumi is installed. Continuing..."
-fi
+echo "==> 1/3 Checking for dependencies..."
 
-if ! command -v bun &>/dev/null; then
-  echo "==> bun not found, installing..."
-  curl -fsSL https://bun.sh/install | bash
-else
-  echo "bun is installed. Continuing..."
-fi
+for cmd in pulumi node aws; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "Error: $cmd is not installed."
+    exit 1
+  fi
+done
 
 # VARIABLES
-echo "==> 2/6 Checking variables..."
-if [ -z "$AWS_PROFILE" ]; then
-  echo "Error: Variable 'AWS_PROFILE' pointing to the devops account profile must be set"
-  exit 1
-else
-  echo "Continuing with '$AWS_PROFILE' profile"
-fi
+echo "==> 2/3 Checking variables..."
 
-export PULUMI_CONFIG_PASSPHRASE=''
-pulumiBackendBucketName=$(bun -e "import params from './params.json'; console.log(params.pulumiBackendBucketName);")
-gitProvider=$(bun -e "import params from './params.json'; console.log(params.gitProvider);")
-gitRepoId=$(bun -e "import params from './params.json'; console.log(params.gitRepoId);")
-projectName=$(bun -e "import params from './params.json'; console.log(params.projectName);")
-devopsSSORoleName=$(bun -e "import params from './params.json'; console.log(params.devopsSSORoleName);")
+read -r gitProvider gitRepoId projectName devopsSSORoleName devopsRole pulumiBackendBucketName <<EOF
+$(node --import=tsx -e "
+import p from './params.json';
+console.log(p.gitProvider, p.gitRepoId, p.projectName, p.devopsSSORoleName, p.profiles.devops, p.pulumiBackendBucketName);
+")
+EOF
 
-for var in pulumiBackendBucketName gitProvider gitRepoId projectName devopsSSORoleName; do
+for var in gitProvider gitRepoId projectName devopsSSORoleName devopsRole pulumiBackendBucketName; do
   if [[ -z "${!var}" ]]; then
     echo "Error: Variable '$var' is empty in params.json."
     exit 1
@@ -41,20 +29,24 @@ for var in pulumiBackendBucketName gitProvider gitRepoId projectName devopsSSORo
 done
 
 # DEPLOYING
+echo "==> 3/3 Deploying..."
 
-echo "==> 3/6 Deploying..."
+export AWS_PROFILE=$devopsRole
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+PULUMI_BACKEND_BUCKET=pulumi-backend-${AWS_ACCOUNT_ID}
+
 pulumi login s3://${pulumiBackendBucketName} || {
   echo "Failed to login to S3 backend"
   exit 1
 }
 
-ENVS=$(bun -e "import params from './params.json'; console.log(Object.keys(params.profiles).join(' '));")
+export PULUMI_CONFIG_PASSPHRASE=''
+ENVS=$(node --import=tsx -e "import params from './params.json'; console.log(Object.keys(params.profiles.transform).join(' '));")
 
 for ENV in $ENVS; do
-  DEVOPS_PROF=$(bun -e "import params from './params.json'; console.log(params.profiles['$ENV']?.devops || '');")
-  TRANSFORM_PROF=$(bun -e "import params from './params.json'; console.log(params.profiles['$ENV']?.transform || '');")
+  TRANSFORM_PROF=$(node --import=tsx -e "import params from './params.json'; console.log(params.profiles.transform['$ENV']);")
 
-  if [[ -n "$DEVOPS_PROF" && -n "$TRANSFORM_PROF" ]]; then
+  if [[ -n "$TRANSFORM_PROF" ]]; then
     echo "----Deploying requirements for $ENV----"
     pulumi --cwd requirements stack select "$ENV" --create
     pulumi --cwd requirements up --yes --non-interactive
@@ -63,7 +55,7 @@ for ENV in $ENVS; do
     pulumi --cwd pipeline stack select "$ENV" --create
     pulumi --cwd pipeline up --yes --non-interactive
   else
-    echo "----Skipping Environment: $ENV (Missing devops or transform profiles)"
+    echo "----Skipping Environment: $ENV (Missing transform profile)"
   fi
 done
 
