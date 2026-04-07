@@ -22,8 +22,8 @@ npx tsdown
 
 Take in account when manually deploying for the first time, you must name the stacks the same as the environments in params.json profiles.transform.[env], it is recommended for the first deploy to be performed using the deploy.sh script.
 
-export AWS_PROFILE=[devops-account-profile]
-pulumi login s3://pulumi-backend-[aws-account-id]
+export AWS_PROFILE={devops-account-profile}
+pulumi login s3://{pulumi-backend-bucket-name}
 pulumi --cwd requirements up
 pulumi --cwd pipeline up
 
