@@ -34,8 +34,6 @@ done
 echo "==> 3/3 Deploying..."
 
 export AWS_PROFILE=$devopsRole
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-PULUMI_BACKEND_BUCKET=pulumi-backend-${AWS_ACCOUNT_ID}
 
 pulumi login s3://${pulumiBackendBucketName} || {
   echo "Failed to login to S3 backend"
