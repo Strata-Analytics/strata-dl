@@ -98,8 +98,6 @@ const deployProject = new aws.codebuild.Project(getName("deploy-project"), {
             nodejs: 24,
           },
           commands: [
-            'curl -fsSL https://bun.sh/install | bash',
-            'export PATH=$HOME/.bun/bin:$PATH',
             'curl -fsSL https://get.pulumi.com | sh',
             'export PATH=$PATH:/root/.pulumi/bin',
             'npm ci'
