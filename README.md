@@ -1,61 +1,48 @@
- # AWS TypeScript Pulumi Template
+# strata-dl
 
- A minimal Pulumi template for provisioning AWS infrastructure using TypeScript. This template creates an Amazon S3 bucket and exports its name.
+AWS data lake infrastructure provisioned with Pulumi and TypeScript.
 
- ## Prerequisites
+## Prerequisites
 
- - Pulumi CLI (>= v3): https://www.pulumi.com/docs/get-started/install/
- - Node.js (>= 14): https://nodejs.org/
- - AWS credentials configured (e.g., via `aws configure` or environment variables)
+The following CLIs must be installed and available in your PATH:
 
- ## Getting Started
+- [`pulumi`](https://www.pulumi.com/docs/install/)
+- `node` (v24)
+- `aws` (with configured with SSO profiles)
 
- 1. Initialize a new Pulumi project:
+## Configuration
 
-    ```bash
-    pulumi new aws-typescript
-    ```
+Before deploying, edit `params.json` with your project values:
 
-    Follow the prompts to set your:
-    - Project name
-    - Project description
-    - AWS region (defaults to `us-east-1`)
+| Field | Description |
+|---|---|
+| `pulumiBackendBucketName` | S3 bucket name for Pulumi remote state |
+| `gitProvider` | Source provider (e.g. `GitHub`) |
+| `gitRepoId` | Repository identifier (e.g. `owner/repo`) |
+| `projectName` | Used to name all AWS resources |
+| `devopsSSORoleName` | The SSO role name in the devops account |
+| `profiles.devops` | AWS CLI profile for the devops account |
+| `profiles.transform.{env}` | AWS CLI profile for the {evn} data lake account |
 
- 2. Preview and deploy your infrastructure:
+## Deployment
 
-    ```bash
-    pulumi preview
-    pulumi up
-    ```
+Run the deployment script from the repository root:
 
- 3. When you're finished, tear down your stack:
+```bash
+./deploy.sh
+```
 
-    ```bash
-    pulumi destroy
-    pulumi stack rm
-    ```
+The script will:
 
- ## Project Layout
+1. Verify that `pulumi`, `node`, and `aws` are installed and run `npm ci`
+2. Validate all required fields in `params.json`
+3. Set `AWS_PROFILE` to `profiles.devops` and log in to the Pulumi S3 backend
+4. For each environment defined in `profiles.transform`, deploy in order:
+   - `requirements` stack — IAM roles for cross-account access
+   - `pipeline` stack — CodePipeline + CodeBuild for automated datalake deployments
 
- - `Pulumi.yaml` — Pulumi project and template metadata
- - `index.ts` — Main Pulumi program (creates an S3 bucket)
- - `package.json` — Node.js dependencies
- - `tsconfig.json` — TypeScript compiler options
+After the script completes, you must **finish the CodeConnection setup manually** in the AWS Console (CodePipeline  → Settings → Connections) to authorize the GitHub integration.
 
- ## Configuration
+## How datalake changes are deployed
 
- | Key           | Description                             | Default     |
- | ------------- | --------------------------------------- | ----------- |
- | `aws:region`  | The AWS region to deploy resources into | `us-east-1` |
-
- Use `pulumi config set <key> <value>` to customize configuration.
-
- ## Next Steps
-
- - Extend `index.ts` to provision additional resources (e.g., VPCs, Lambda functions, DynamoDB tables).
- - Explore [Pulumi AWSX](https://www.pulumi.com/docs/reference/pkg/awsx/) for higher-level AWS components.
- - Consult the [Pulumi documentation](https://www.pulumi.com/docs/) for more examples and best practices.
-
- ## Getting Help
-
- If you encounter any issues or have suggestions, please open an issue in this repository.
+Once the pipeline is set up, pushing commits that modify files under `datalake/` to the `{env}` branch will automatically trigger CodePipeline, which bundles the Lambda functions and runs `pulumi up` for the `datalake` stack in the corresponding environment.
