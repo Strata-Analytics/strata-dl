@@ -11,6 +11,8 @@ for cmd in pulumi node aws; do
   fi
 done
 
+npm ci
+
 # VARIABLES
 echo "==> 2/3 Checking variables..."
 
