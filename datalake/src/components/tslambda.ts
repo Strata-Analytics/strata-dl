@@ -4,7 +4,7 @@ import * as aws from "@pulumi/aws";
 type TSLambdaArgs = {
   path: string
   description: string
-  layers?: string[]
+  layers?: (pulumi.Output<string> | string)[]
   timeout?: number
   memory?: number
 }
