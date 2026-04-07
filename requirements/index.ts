@@ -6,13 +6,13 @@ const devops = new aws.Provider("devops", {
   defaultTags: {
     tags
   },
-  profile: params.profiles[env].devops
+  profile: params.profiles.devops
 })
 const transform = new aws.Provider("transformDev", {
   defaultTags: {
     tags
   },
-  profile: params.profiles[env].transform
+  profile: params.profiles.transform[env]
 })
 const devopsAccountId = await getAccountId(devops)
 

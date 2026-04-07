@@ -3,11 +3,11 @@
   "gitProvider": "",
   "gitRepoId": "",
   "projectName": "",
+  "devopsSSORoleName": "",
   "profiles": {
-    "dev": {
-      "devops": "",
-      "transform": ""
+    "devops": "",
+    "transform": {
+      "dev": ""
     }
-  },
-  "devopsSSORoleName": ""
+  }
 }

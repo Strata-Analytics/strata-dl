@@ -1,14 +1,15 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-import { env, getName, gitRepoId, pulumiBackendBucketName, gitProvider } from "../commons";
+import { env, getName } from "../commons";
 import { devopsProvider, devopsRoleArn, transformRoleArn } from "../providers";
+import params from '../params.json'
 
 const artifactBucket = new aws.s3.Bucket(getName("pipeline-artifacts"), {
   forceDestroy: env === "dev",
 }, { provider: devopsProvider });
 
-const gitConnection = new aws.codeconnections.Connection(getName(gitProvider), {
-  providerType: gitProvider,
+const gitConnection = new aws.codeconnections.Connection(getName(params.gitProvider), {
+  providerType: params.gitProvider,
 }, { provider: devopsProvider });
 
 const codebuildRole = new aws.iam.Role(getName("codebuild"), {
@@ -49,8 +50,8 @@ const codebuildRole = new aws.iam.Role(getName("codebuild"), {
             ],
             resources: [
               arn + '/*',
-              `arn:aws:s3:::${pulumiBackendBucketName}/*`,
-              `arn:aws:s3:::${pulumiBackendBucketName}`
+              `arn:aws:s3:::${params.pulumiBackendBucketName}/*`,
+              `arn:aws:s3:::${params.pulumiBackendBucketName}`
             ]
           }
         ]
@@ -83,7 +84,7 @@ const deployProject = new aws.codebuild.Project(getName("deploy-project"), {
     environmentVariables: [
       {
         name: "PULUMI_BACKEND_URL",
-        value: `s3://${pulumiBackendBucketName}`,
+        value: `s3://${params.pulumiBackendBucketName}`,
       },
     ],
   },
@@ -202,7 +203,7 @@ new aws.codepipeline.Pipeline(getName("datalake"), {
     {
       providerType: "CodeStarSourceConnection",
       gitConfiguration: {
-        sourceActionName: gitProvider,
+        sourceActionName: params.gitProvider,
         pushes: [
           {
             branches: {
@@ -227,7 +228,7 @@ new aws.codepipeline.Pipeline(getName("datalake"), {
       name: "Source",
       actions: [
         {
-          name: gitProvider,
+          name: params.gitProvider,
           category: "Source",
           owner: "AWS",
           provider: "CodeStarSourceConnection",
@@ -235,7 +236,7 @@ new aws.codepipeline.Pipeline(getName("datalake"), {
           outputArtifacts: ["source"],
           configuration: {
             ConnectionArn: gitConnection.arn,
-            FullRepositoryId: gitRepoId,
+            FullRepositoryId: params.gitRepoId,
             BranchName: env,
             DetectChanges: "true",
           },
